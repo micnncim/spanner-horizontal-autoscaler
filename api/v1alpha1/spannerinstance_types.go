@@ -24,14 +24,24 @@ import (
 
 // SpannerInstanceSpec defines the desired state of SpannerInstance
 type SpannerInstanceSpec struct {
-	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
+	// +kubebuilder:validation:Required
+	// +kubebuilder:validation:Format:=string
+	InstanceId string `json:"instanceId"`
+
+	// +kubebuilder:validation:Minimum=1
+	MinNodes *int32 `json:"minNodes"`
+
+	// +kubebuilder:validation:Minimum=1
+	MaxNodes *int32 `json:"maxNodes"`
+
+	// +kubebuilder:validation:Minimum=0
+	// +kubebuilder:validation:Maximum=100
+	TargetCPUUtilization *int32 `json:"targetCpuUtilization"`
 }
 
 // SpannerInstanceStatus defines the observed state of SpannerInstance
 type SpannerInstanceStatus struct {
-	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
+	CPUUtilization *int32 `json:"cpuUtilization"`
 }
 
 // +kubebuilder:object:root=true
