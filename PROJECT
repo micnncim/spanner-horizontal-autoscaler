@@ -1,0 +1,7 @@
+version: "2"
+domain: k8s.io
+repo: github.com/micnncim/spanner-horizontal-autoscaler
+resources:
+- group: spannerhorizontalautoscaler
+  version: v1alpha1
+  kind: SpannerInstance
