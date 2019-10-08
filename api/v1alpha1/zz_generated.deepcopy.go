@@ -95,8 +95,8 @@ func (in *SpannerInstanceSpec) DeepCopyInto(out *SpannerInstanceSpec) {
 		*out = new(int32)
 		**out = **in
 	}
-	if in.TargetCPUUtilization != nil {
-		in, out := &in.TargetCPUUtilization, &out.TargetCPUUtilization
+	if in.CPUUtilizationThreshold != nil {
+		in, out := &in.CPUUtilizationThreshold, &out.CPUUtilizationThreshold
 		*out = new(int32)
 		**out = **in
 	}
@@ -117,6 +117,11 @@ func (in *SpannerInstanceStatus) DeepCopyInto(out *SpannerInstanceStatus) {
 	*out = *in
 	if in.CPUUtilization != nil {
 		in, out := &in.CPUUtilization, &out.CPUUtilization
+		*out = new(int32)
+		**out = **in
+	}
+	if in.AvailableNodes != nil {
+		in, out := &in.AvailableNodes, &out.AvailableNodes
 		*out = new(int32)
 		**out = **in
 	}

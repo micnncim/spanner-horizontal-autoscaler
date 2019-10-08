@@ -2,6 +2,7 @@ package monitoring
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -65,14 +66,16 @@ type SpannerInstanceStatus struct {
 
 // ReadMetrics reads time series metrics.
 // https://cloud.google.com/monitoring/custom-metrics/reading-metrics?hl=ja#monitoring_read_timeseries_fields-go
-func (c *Client) GetSpannerInstanceStatuses(ctx context.Context) ([]*SpannerInstanceStatus, error) {
+func (c *Client) GetSpannerInstanceStatus(ctx context.Context, instanceID string) (*SpannerInstanceStatus, error) {
 	now := time.Now()
 	startTime := now.UTC().Add(c.syncPeriod)
 	endTime := now.UTC()
-	filter := `
+
+	filter := fmt.Sprintf(`
 		metric.type = "spanner.googleapis.com/instance/cpu/utilization_by_priority" AND
-		metric.label.priority = "high"
-`
+		metric.label.priority = "high" AND
+		metric.label.database = "%s"
+`, instanceID)
 
 	req := &monitoringpb.ListTimeSeriesRequest{
 		Name: fmt.Sprintf("projects/%s", c.projectID),
@@ -89,7 +92,6 @@ func (c *Client) GetSpannerInstanceStatuses(ctx context.Context) ([]*SpannerInst
 		View: monitoringpb.ListTimeSeriesRequest_FULL,
 	}
 
-	var statuses []*SpannerInstanceStatus
 	it := c.monitoringMetricClient.ListTimeSeries(ctx, req)
 	for {
 		resp, err := it.Next()
@@ -102,13 +104,13 @@ func (c *Client) GetSpannerInstanceStatuses(ctx context.Context) ([]*SpannerInst
 
 		// v is CPU utilization.
 		v := int32(resp.GetPoints()[0].GetValue().GetDoubleValue())
-		statuses = append(statuses, &SpannerInstanceStatus{
+		return &SpannerInstanceStatus{
 			Name: resp.GetMetric().Labels["database"],
 			SpannerInstanceStatus: spannerhorizontalautoscalerv1alpha1.SpannerInstanceStatus{
 				CPUUtilization: pointer.Int32(v),
 			},
-		})
+		}, nil
 	}
 
-	return statuses, nil
+	return nil, errors.New("no such spanner instance metrics")
 }

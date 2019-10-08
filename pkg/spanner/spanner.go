@@ -2,9 +2,11 @@ package spanner
 
 import (
 	"context"
+	"fmt"
 
 	spanneradmin "cloud.google.com/go/spanner/admin/instance/apiv1"
 	"github.com/go-logr/logr"
+	"google.golang.org/api/iterator"
 	instancepb "google.golang.org/genproto/googleapis/spanner/admin/instance/v1"
 )
 
@@ -29,6 +31,30 @@ func NewClient(spannerInstanceAdminClient *spanneradmin.InstanceAdminClient, opt
 		opt(c)
 	}
 	return c
+}
+
+func (c *Client) GetInstance(ctx context.Context, instanceID string) (*instancepb.Instance, error) {
+	return c.spannerInstanceAdminClient.GetInstance(ctx, &instancepb.GetInstanceRequest{
+		Name: instanceID,
+	})
+}
+
+func (c *Client) ListInstances(ctx context.Context, projectID string) ([]*instancepb.Instance, error) {
+	it := c.spannerInstanceAdminClient.ListInstances(ctx, &instancepb.ListInstancesRequest{
+		Parent: fmt.Sprintf("projects/%s", projectID),
+	})
+	var instances []*instancepb.Instance
+	for {
+		instance, err := it.Next()
+		if err == iterator.Done {
+			break
+		}
+		if err != nil {
+			return nil, err
+		}
+		instances = append(instances, instance)
+	}
+	return instances, nil
 }
 
 func (c *Client) UpdateInstanceNodeCount(ctx context.Context, instanceID string, nodeCount int) error {

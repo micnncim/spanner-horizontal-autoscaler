@@ -36,12 +36,13 @@ type SpannerInstanceSpec struct {
 
 	// +kubebuilder:validation:Minimum=0
 	// +kubebuilder:validation:Maximum=100
-	TargetCPUUtilization *int32 `json:"targetCpuUtilization"`
+	CPUUtilizationThreshold *int32 `json:"cpuUtilizationThreshold"`
 }
 
 // SpannerInstanceStatus defines the observed state of SpannerInstance
 type SpannerInstanceStatus struct {
 	CPUUtilization *int32 `json:"cpuUtilization"`
+	AvailableNodes *int32 `json:"availableNodes"`
 }
 
 // +kubebuilder:object:root=true
