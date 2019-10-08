@@ -16,11 +16,19 @@ limitations under the License.
 package main
 
 import (
+	"context"
 	"flag"
 	"os"
+	"time"
 
 	spannerhorizontalautoscalerv1alpha1 "github.com/micnncim/spanner-horizontal-autoscaler/api/v1alpha1"
 	"github.com/micnncim/spanner-horizontal-autoscaler/controllers"
+	"github.com/micnncim/spanner-horizontal-autoscaler/pkg/monitoring"
+	"github.com/micnncim/spanner-horizontal-autoscaler/pkg/pointer"
+	"github.com/micnncim/spanner-horizontal-autoscaler/pkg/spanner"
+
+	spanneradmin "cloud.google.com/go/spanner/admin/instance/apiv1"
+
 	"k8s.io/apimachinery/pkg/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
@@ -52,6 +60,7 @@ func main() {
 	ctrl.SetLogger(zap.Logger(true))
 
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
+		SyncPeriod:         pointer.Duration(30 * time.Second),
 		Scheme:             scheme,
 		MetricsBindAddress: metricsAddr,
 		LeaderElection:     enableLeaderElection,
@@ -62,9 +71,26 @@ func main() {
 		os.Exit(1)
 	}
 
+	ctx := context.Background()
+
+	spannerAdminClient, err := spanneradmin.NewInstanceAdminClient(ctx)
+	if err != nil {
+		setupLog.Error(err, "unable to create SpannerAdminClient")
+		os.Exit(1)
+	}
+	spannerClient := spanner.NewClient(spannerAdminClient, spanner.WithLog(ctrl.Log.WithName("spanner")))
+
+	// TODO: Set projectID appropriately.
+	projectID := ""
+	monitoringClient, err := monitoring.NewClient(ctx, projectID)
+
 	if err = (&controllers.SpannerInstanceReconciler{
-		Client: mgr.GetClient(),
-		Log:    ctrl.Log.WithName("controllers").WithName("SpannerInstance"),
+		Client:     mgr.GetClient(),
+		Log:        ctrl.Log.WithName("controllers").WithName("SpannerInstance"),
+		Scheme:     mgr.GetScheme(),
+		Recorder:   mgr.GetEventRecorderFor("spanner-horizontal-autoscaler"),
+		Spanner:    spannerClient,
+		Monitoring: monitoringClient,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "SpannerInstance")
 		os.Exit(1)

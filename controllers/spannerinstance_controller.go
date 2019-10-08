@@ -38,8 +38,8 @@ type SpannerInstanceReconciler struct {
 	Scheme   *runtime.Scheme
 	Recorder record.EventRecorder
 
-	Monitoring monitoring.Client
-	Spanner    spanner.Client
+	Spanner    *spanner.Client
+	Monitoring *monitoring.Client
 }
 
 // +kubebuilder:rbac:groups=spannerhorizontalautoscaler.k8s.io,resources=spannerinstances,verbs=get;list;watch;create;update;patch;delete
