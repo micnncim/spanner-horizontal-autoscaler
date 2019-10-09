@@ -24,6 +24,7 @@ import (
 	"k8s.io/client-go/tools/record"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	spannerhorizontalautoscalerv1alpha1 "github.com/micnncim/spanner-horizontal-autoscaler/api/v1alpha1"
 	"github.com/micnncim/spanner-horizontal-autoscaler/pkg/monitoring"
@@ -41,6 +42,8 @@ type SpannerInstanceReconciler struct {
 	Spanner    *spanner.Client
 	Monitoring *monitoring.Client
 }
+
+var _ reconcile.Reconciler = (*SpannerInstanceReconciler)(nil)
 
 // +kubebuilder:rbac:groups=spannerhorizontalautoscaler.k8s.io,resources=spannerinstances,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=spannerhorizontalautoscaler.k8s.io,resources=spannerinstances/status,verbs=get;update;patch
@@ -61,13 +64,13 @@ func (r *SpannerInstanceReconciler) Reconcile(req ctrl.Request) (ctrl.Result, er
 		// TODO: Adopt suitable algorithm.
 		// ref) https://github.com/kubernetes/community/blob/master/contributors/design-proposals/autoscaling/horizontal-pod-autoscaler.md
 		// TODO: Reduce node count if necessary.
-		if err := r.Spanner.UpdateInstanceNodeCount(ctx, spannerInstance.Spec.InstanceId, 1); err != nil {
+		if err := r.Spanner.IncreaseInstanceNodeCount(ctx, spannerInstance.Spec.InstanceID, 1); err != nil {
 			log.Error(err, "unable to update spanner instance node count")
 			return ctrl.Result{}, err
 		}
 	}
 
-	instanceID := spannerInstance.Spec.InstanceId
+	instanceID := spannerInstance.Spec.InstanceID
 
 	// TODO: Set projectID appropriately.
 	instance, err := r.Spanner.GetInstance(ctx, instanceID)

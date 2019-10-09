@@ -57,7 +57,7 @@ func (c *Client) ListInstances(ctx context.Context, projectID string) ([]*instan
 	return instances, nil
 }
 
-func (c *Client) UpdateInstanceNodeCount(ctx context.Context, instanceID string, nodeCount int) error {
+func (c *Client) IncreaseInstanceNodeCount(ctx context.Context, instanceID string, deltaNodeCount int) error {
 	instance, err := c.spannerInstanceAdminClient.GetInstance(ctx, &instancepb.GetInstanceRequest{
 		Name: instanceID,
 	})
@@ -65,7 +65,7 @@ func (c *Client) UpdateInstanceNodeCount(ctx context.Context, instanceID string,
 		return err
 	}
 
-	instance.NodeCount = int32(nodeCount)
+	instance.NodeCount += int32(deltaNodeCount)
 	_, err = c.spannerInstanceAdminClient.UpdateInstance(ctx, &instancepb.UpdateInstanceRequest{
 		Instance: instance,
 	})
