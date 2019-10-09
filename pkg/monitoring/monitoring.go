@@ -102,12 +102,10 @@ func (c *Client) GetSpannerInstanceStatus(ctx context.Context, instanceID string
 			return nil, err
 		}
 
-		// v is CPU utilization.
-		v := int32(resp.GetPoints()[0].GetValue().GetDoubleValue())
 		return &SpannerInstanceStatus{
 			Name: resp.GetMetric().Labels["database"],
 			SpannerInstanceStatus: spannerhorizontalautoscalerv1alpha1.SpannerInstanceStatus{
-				CPUUtilization: pointer.Int32(v),
+				CPUUtilization: pointer.Int32(int32(resp.GetPoints()[0].GetValue().GetDoubleValue())),
 			},
 		}, nil
 	}

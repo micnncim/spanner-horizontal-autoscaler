@@ -83,6 +83,10 @@ func main() {
 	// TODO: Set projectID appropriately.
 	projectID := ""
 	monitoringClient, err := monitoring.NewClient(ctx, projectID)
+	if err != nil {
+		setupLog.Error(err, "unable to create monitoring client")
+		os.Exit(1)
+	}
 
 	if err = (&controllers.SpannerInstanceReconciler{
 		Client:     mgr.GetClient(),
